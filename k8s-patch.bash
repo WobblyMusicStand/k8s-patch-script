@@ -200,7 +200,6 @@ else
 	printf "Connecting to k8s-worker1 \n"
 	sshpass -p "Passw0rd!" ssh -o "StrictHostKeyChecking no" root@192.168.1.31 "kubeadm reset --force --ignore-preflight-errors strings" 2>/dev/null
 	sshpass -p "Passw0rd!" ssh root@192.168.1.31 "$TOKEN" 2>/dev/null
-    printf " k8s-worker1 reset \n"
 fi
 
 if kubectl get nodes | grep -q 'k8s-worker1'; 
@@ -219,7 +218,6 @@ else
 	printf "Connecting to k8s-worker2 \n"
 	sshpass -p "Passw0rd!" ssh -o "StrictHostKeyChecking no" root@192.168.1.32 "kubeadm reset --force --ignore-preflight-errors strings" 2>/dev/null
 	sshpass -p "Passw0rd!" ssh root@192.168.1.32 "$TOKEN" 2>/dev/null
-    printf "k8s-worker1 reset \n"
 fi
 
 if kubectl get nodes | grep -q 'k8s-worker2'; 
@@ -258,4 +256,3 @@ then
     printf "[Certificate renewal] Failure: Some nodes reporting as NotReady \n" 1>&2
     exit 6
 fi
-
