@@ -78,11 +78,13 @@ then
     #Will return a connection error if this is not possible. 
     #This test will make 5 attempts, and wait 1 second between each failed check.
     i=0
-    while [ "$i" -le 5 ];
+    while [ "$i" -le 10 ];
     do
         if kubectl get nodes 2>&1 | grep -q 'refused'; 
             then
                 printf "kubectl connection try: %s\n" "$i"
+            else
+                break
         fi        
         sleep 1
         ((i++))
