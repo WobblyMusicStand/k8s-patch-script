@@ -77,19 +77,24 @@ then
     #Check that the certificates have been applied and the user can connect to kubectl
     #Will return a connection error if this is not possible. 
     #This test will make 5 attempts, and wait 1 second between each failed check.
-    tries=0
-    while "$tries" -lt 5;
+    i=0
+    while [ "$i" -le 5 ];
     do
-        if kubectl get nodes | grep -q 'k8s-master1'; 
+        if kubectl get nodes 2>&1 | grep -q 'refused'; 
             then
-                printf "[Certificate renewal] Successfully connected to kubectl \n" 1>&2
+                printf "kubectl connection try: %s\n" "$i"
+        fi        
+        sleep 1
+        ((i++))
+    done
+
+    if kubectl get nodes 2>&1 | grep -q 'k8s-master1'; 
+            then
+                printf "[Certificate renewal] Successfully updated certificates \n"
             else
                 printf "[Certificate renewal] Failed to place updated certificates in all locations \n" 1>&2
                 exit 3
-        fi
-        sleep 1
-        ((tries++))
-    done
+    fi   
 
 else
     printf "[Certificate Renewal] No invalid certificates. \n " 1>&2
@@ -138,7 +143,7 @@ fi
 
 #Verify that the k8s-worker1 has not already joined and then use remote ssh execution to reset the node and invoke the new token.
 if kubectl get nodes | grep -q 'k8s-worker1'; then
-	printf "k8s-worker1 already joined \n"
+	printf "Warning: k8s-worker1 already joined \n"
 else
 	printf "Connecting to k8s-worker1 \n"
 	sshpass -p "Passw0rd!" ssh -o "StrictHostKeyChecking no" root@192.168.1.31 "kubeadm reset --force --ignore-preflight-errors strings" 2>/dev/null
@@ -148,7 +153,7 @@ fi
 
 #Verify that the k8s-worker2 has not already joined and then use remote ssh execution to reset the node and invoke the new token.
 if kubectl get nodes | grep -q 'k8s-worker2'; then
-	printf "k8s-worker2 already joined \n"
+	printf "Warning: k8s-worker2 already joined \n"
 else
 	printf "Connecting to k8s-worker2 \n"
 	sshpass -p "Passw0rd!" ssh -o "StrictHostKeyChecking no" root@192.168.1.32 "kubeadm reset --force --ignore-preflight-errors strings" 2>/dev/null
@@ -184,7 +189,7 @@ fi
 
 #Test Status
 tries=0
-while "$tries" -lt 30;
+while [ "$tries" -lt 30 ];
 do
     if kubectl get nodes | grep -q 'NotReady'; 
         then
@@ -196,6 +201,6 @@ do
     fi
 done
 
-#After 30 seconds, if the Worker nodes are not yet ready, the script will report a failure.
-printf "[Certificate renewal] Failed to place updated certificates in all locations \n" 1>&2
+#After 30 seconds, if the Worker nodes are still NotReady, the script will report a failure.
+printf "[Certificate renewal] Failure: Some nodes reporting as NotReady \n" 1>&2
 exit 7
