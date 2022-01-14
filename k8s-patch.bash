@@ -70,12 +70,9 @@ then
     sudo systemctl daemon-reload
     sudo systemctl restart kubelet
 
-    #Wait on previous child processes to complete (systemctrl restart)
-    # wait
-
     #Check that the certificates have been applied and the user can connect to kubectl
     #Will return a connection error if this is not possible. 
-    #This test will make 5 attempts, and wait 1 second between each failed check.
+    #This test will make 30 attempts, and wait 1 second between each failed check.
     i=0
     while [ "$i" -le 30 ];
     do
