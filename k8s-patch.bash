@@ -7,7 +7,7 @@ WORKERNODES=("k8s-worker1" "k8s-worker2")
 ########################
 
 # Check certificate expiration
-echo 'Passw0rd!' | sudo -S kubeadm alpha certs check-expiration
+echo 'Passw0rd!' | sudo -S kubeadm alpha certs check-expiration 2>/dev/null
 
 if sudo kubeadm alpha certs check-expiration | grep -q 'invalid'; 
 then
