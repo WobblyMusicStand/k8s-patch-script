@@ -7,9 +7,7 @@ WORKERNODES=("k8s-worker1" "k8s-worker2")
 ########################
 
 # Check certificate expiration
-CERTS=$(echo 'Passw0rd!' | sudo -S kubeadm alpha certs check-expiration 2>/dev/null)
-
-if echo "$CERTS" | grep -q -F 'invalid';  
+if echo 'Passw0rd!' | sudo -S kubeadm alpha certs check-expiration 2>/dev/null | grep -q -F 'invalid';  
 then
     printf "[Certificate Renewal] Invalid certificates found, attempting to update. \n"
 
