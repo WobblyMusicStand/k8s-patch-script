@@ -39,6 +39,7 @@ then
     if sudo kubeadm alpha certs check-expiration | grep -q 'invalid'; 
     then
         printf "[sudo kubeadm alpha certs renew all] Failed to update all certificates \n " 1>&2
+        echo false
         #exit 2
     else
         printf "[sudo kubeadm alpha certs renew all] Successfully updated certificates \n"
@@ -97,6 +98,7 @@ then
         printf "[Certificate renewal] Successfully updated certificates \n"
     else
         printf "[Certificate renewal] Failed to place updated certificates in all locations \n" 1>&2
+        echo false
         #exit 3
     fi   
 
@@ -110,7 +112,7 @@ fi
 ###################
 # Delete the worker nodes to re-join with updated certificates
 #Each node will be attempted up-to 5 times, but are expected to succeed on the first.
-#A connection failure will trigger and exit with error 3
+#A connection failure during validation will trigger an exit with error 3
 
 
 # Attempt deletion of Worker1
@@ -120,7 +122,6 @@ do
     if kubectl get nodes 2>&1 | grep -q 'refused'; 
     then
         printf "[Delete Worker1] Warning: Failed to connect to kubectl on attempt: %s\n" "$i"
-        #exit 3
     fi  
 
     if kubectl get nodes | grep -q 'k8s-worker1'; 
@@ -142,7 +143,6 @@ do
     if kubectl get nodes 2>&1 | grep -q 'refused'; 
     then
         printf "[Delete Worker2] Warning: Failed to connect to kubectl on attempt: %s\n" "$i"
-        #exit 3
     fi  
 
     if kubectl get nodes | grep -q 'k8s-worker2'; 
@@ -163,11 +163,13 @@ done
 if kubectl get nodes 2>&1 | grep -q 'refused'
 then
     printf "[Verify no workers] Failed to connect to kubectl \n" 1>&2
+    echo false
     #exit 3
 else
     if kubectl get nodes | grep -q 'k8s-worker1\|k8s-worker2'; 
     then
         printf "[Verify no workers] Failed to delete all worker nodes from master \n" 1>&2
+        echo false
         #exit 4
     else
         printf "[Verify no workers] Successfully deleted all worker nodes from master \n"
@@ -188,7 +190,9 @@ set_lab_variable "k8sToken" "$TOKEN"
 if echo "$TOKEN" | grep -q -F 'kubeadm join'; 
 then
     printf "[Token creation] Successfully created new token \n"
+    echo true
 else
     printf "[Token creation] Failed to create new token \n" 1>&2
+    echo false
     #exit 5
 fi
