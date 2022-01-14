@@ -2,18 +2,13 @@
 
 WORKERNODES=("k8s-worker1" "k8s-worker2")
 
-# Install sshpass, this will be used later to provide the password to the worker node ssh connection and 
-# transmit the token to re-join the cluster.
-# echo 'Passw0rd!' | sudo -S is also used to provide the sudo permissions for this shell session
-echo 'Passw0rd!' | sudo -S apt-get install sshpass 2>/dev/null
-
-# Check certificate expiration
-
 ########################
 ## Certificate Update ##
 ########################
 
-if sudo kubeadm alpha certs check-expiration | grep -q 'invalid'; 
+# Check certificate expiration
+
+if echo 'Passw0rd!' | sudo -S kubeadm alpha certs check-expiration | grep -q 'invalid'; 
 then
     printf "[Certificate Renewal] Invalid certificates found, attempting to update. \n"
 
