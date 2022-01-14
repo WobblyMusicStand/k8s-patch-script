@@ -38,7 +38,6 @@ then
     #This will be present if ANY certificate is invalid.
     if sudo kubeadm alpha certs check-expiration | grep -q 'invalid'; 
     then
-        set_activity_result 0 "[sudo kubeadm alpha certs renew all] Failed to update all certificates"
         printf "[sudo kubeadm alpha certs renew all] Failed to update all certificates \n " 1>&2
         #exit 2
     else
@@ -95,15 +94,13 @@ then
 
     if kubectl get nodes 2>&1 | grep -q 'k8s-master1'; 
     then
-        set_activity_result 1 "[Certificate renewal] Successfully updated certificates \n"
+        printf "[Certificate renewal] Successfully updated certificates \n"
     else
-        set_activity_result 0 "[Certificate renewal] Failed to place updated certificates in all locations"
         printf "[Certificate renewal] Failed to place updated certificates in all locations \n" 1>&2
         #exit 3
     fi   
 
 else    
-    set_activity_result .5 "[Certificate Renewal] Warning: No invalid certificates, attempting to update Nodes"
     printf "[Certificate Renewal] Warning: No invalid certificates, attempting to update Nodes \n "
 fi
 
@@ -122,8 +119,7 @@ while [ "$i" -le 5 ];
 do
     if kubectl get nodes 2>&1 | grep -q 'refused'; 
     then
-        set_activity_result 0 "[Delete Worker1] Failed to connect to kubectl on attempt: %s" "$i"
-        printf "[Delete Worker1] Failed to connect to kubectl on attempt: %s\n" "$i" 1>&2
+        printf "[Delete Worker1] Warning: Failed to connect to kubectl on attempt: %s\n" "$i"
         #exit 3
     fi  
 
@@ -145,8 +141,7 @@ while [ "$i" -le 5 ];
 do
     if kubectl get nodes 2>&1 | grep -q 'refused'; 
     then
-        set_activity_result 0 "[Delete Worker2] Failed to connect to kubectl on attempt: %s" "$i"
-        printf "[Delete Worker2] Failed to connect to kubectl on attempt: %s\n" "$i" 1>&2
+        printf "[Delete Worker2] Warning: Failed to connect to kubectl on attempt: %s\n" "$i"
         #exit 3
     fi  
 
@@ -167,17 +162,14 @@ done
 #Confirm that all workers are deleted from master
 if kubectl get nodes 2>&1 | grep -q 'refused'
 then
-    set_activity_result 0 "[Verify no workers] Failed to connect to kubectl"
     printf "[Verify no workers] Failed to connect to kubectl \n" 1>&2
     #exit 3
 else
     if kubectl get nodes | grep -q 'k8s-worker1\|k8s-worker2'; 
     then
-        set_activity_result 0 "[Verify no workers] Failed to delete all worker nodes from master"
         printf "[Verify no workers] Failed to delete all worker nodes from master \n" 1>&2
         #exit 4
     else
-        set_activity_result 1 "[Verify no workers] Successfully deleted all worker nodes from master"
         printf "[Verify no workers] Successfully deleted all worker nodes from master \n"
     fi
 fi
@@ -190,13 +182,13 @@ fi
 TOKEN=$(kubeadm token create --print-join-command 2>/dev/null)
 echo "$TOKEN"
 
+set_lab_variable "k8sToken" "$TOKEN"
+
 #Test the existence of the new token by confirming the existence of the kubeadm join command.
 if echo "$TOKEN" | grep -q -F 'kubeadm join'; 
 then
-    set_activity_result 1 "[Token creation] Successfully created new token"
     printf "[Token creation] Successfully created new token \n"
 else
-    set_activity_result 0 "[Token creation] Failed to create new token"
     printf "[Token creation] Failed to create new token \n" 1>&2
     #exit 5
 fi
