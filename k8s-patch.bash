@@ -1,9 +1,11 @@
 #!/bin/bash
 
+WORKERNODES=("k8s-worker1" "k8s-worker2")
+
 # Install sshpass, this will be used later to provide the password to the worker node ssh connection and 
 # transmit the token to re-join the cluster.
 # echo 'Passw0rd!' | sudo -S is also used to provide the sudo permissions for this shell session
-echo 'Passw0rd!' | sudo -S apt-get install sshpass
+echo 'Passw0rd!' | sudo -S apt-get install sshpass 2>/dev/null
 
 # Check certificate expiration
 
@@ -13,7 +15,7 @@ echo 'Passw0rd!' | sudo -S apt-get install sshpass
 
 if sudo kubeadm alpha certs check-expiration | grep -q 'invalid'; 
 then
-    printf "[Certificate Renewal] Invalid certificates found, attempting to update. \n" 1>&2
+    printf "[Certificate Renewal] Invalid certificates found, attempting to update. \n"
 
     # Make backup of certificates
 
@@ -36,10 +38,11 @@ then
     #This will be present if ANY certificate is invalid.
     if sudo kubeadm alpha certs check-expiration | grep -q 'invalid'; 
     then
-        printf "[sudo kubeadm alpha certs renew all] Failed to update all certificates. \n " 1>&2
-        exit 2
+        set_activity_result 0 "[sudo kubeadm alpha certs renew all] Failed to update all certificates"
+        printf "[sudo kubeadm alpha certs renew all] Failed to update all certificates \n " 1>&2
+        #exit 2
     else
-        printf "[sudo kubeadm alpha certs renew all] Successfully updated certificates. \n" 1>&2
+        printf "[sudo kubeadm alpha certs renew all] Successfully updated certificates \n"
     fi
 
     # Verify if kublet.conf file was updated with new certificate information by comparing it with backup file
@@ -72,7 +75,7 @@ then
     sudo systemctl restart kubelet
 
     #Wait on previous child processes to complete (systemctrl restart)
-    wait
+    # wait
 
     #Check that the certificates have been applied and the user can connect to kubectl
     #Will return a connection error if this is not possible. 
@@ -92,14 +95,16 @@ then
 
     if kubectl get nodes 2>&1 | grep -q 'k8s-master1'; 
     then
-        printf "[Certificate renewal] Successfully updated certificates \n"
+        set_activity_result 1 "[Certificate renewal] Successfully updated certificates \n"
     else
+        set_activity_result 0 "[Certificate renewal] Failed to place updated certificates in all locations"
         printf "[Certificate renewal] Failed to place updated certificates in all locations \n" 1>&2
-        exit 3
+        #exit 3
     fi   
 
-else
-    printf "[Certificate Renewal] Warning: No invalid certificates, attempting to update Nodes \n " 1>&2
+else    
+    set_activity_result .5 "[Certificate Renewal] Warning: No invalid certificates, attempting to update Nodes"
+    printf "[Certificate Renewal] Warning: No invalid certificates, attempting to update Nodes \n "
 fi
 
 
@@ -111,64 +116,69 @@ fi
 #A connection failure will trigger and exit with error 3
 
 
-# Attempt deletion of k8s-worker1
+# Attempt deletion of Worker1
 i=0
 while [ "$i" -le 5 ];
 do
     if kubectl get nodes 2>&1 | grep -q 'refused'; 
     then
-        printf "[Delete k8s-worker1] Failed to connect to kubectl on attempt: %s\n" "$i"
-        exit 3
+        set_activity_result 0 "[Delete Worker1] Failed to connect to kubectl on attempt: %s" "$i"
+        printf "[Delete Worker1] Failed to connect to kubectl on attempt: %s\n" "$i" 1>&2
+        #exit 3
     fi  
 
     if kubectl get nodes | grep -q 'k8s-worker1'; 
     then
-        printf "Attempting to deleting node k8s-worker1"
+        printf "Attempting to deleting node Worker1"
         kubectl delete node k8s-worker1
     else
-        printf "[Delete k8s-worker1] Successfully deleted k8s-worker1 from master \n" 1>&2
+        printf "[Delete Worker1] Successfully deleted Worker1 from master \n"
         break
     fi      
     sleep 1
     ((i++))
 done
 
-# Attempt deletion of k8s-worker2
+# Attempt deletion of worker2
 i=0
 while [ "$i" -le 5 ];
 do
     if kubectl get nodes 2>&1 | grep -q 'refused'; 
     then
-        printf "[Delete k8s-worker2] Failed to connect to kubectl on attempt: %s\n" "$i"
-        exit 3
+        set_activity_result 0 "[Delete Worker2] Failed to connect to kubectl on attempt: %s" "$i"
+        printf "[Delete Worker2] Failed to connect to kubectl on attempt: %s\n" "$i" 1>&2
+        #exit 3
     fi  
 
     if kubectl get nodes | grep -q 'k8s-worker2'; 
     then
-        printf "Attempting to deleting node k8s-worker2"
+        printf "Attempting to deleting node Worker2"
         kubectl delete node k8s-worker2
     else
-        printf "[Delete k8s-worker2] Successfully deleted k8s-worker2 from master \n" 1>&2
+        printf "[Delete Worker2] Successfully deleted Worker2 from master \n"
         break
     fi      
     sleep 1
     ((i++))
 done
 
-wait
+#wait
 
 #Confirm that all workers are deleted from master
 if kubectl get nodes 2>&1 | grep -q 'refused'
 then
-    printf "[Verify no workers] Failed to connect to kubectl on attempt"
-    exit 3
+    set_activity_result 0 "[Verify no workers] Failed to connect to kubectl"
+    printf "[Verify no workers] Failed to connect to kubectl \n" 1>&2
+    #exit 3
 else
     if kubectl get nodes | grep -q 'k8s-worker1\|k8s-worker2'; 
     then
+        set_activity_result 0 "[Verify no workers] Failed to delete all worker nodes from master"
         printf "[Verify no workers] Failed to delete all worker nodes from master \n" 1>&2
-        exit 4
+        #exit 4
     else
-        printf "[Verify no workers] Successfully deleted all worker nodes from master \n" 1>&2
+        set_activity_result 1 "[Verify no workers] Successfully deleted all worker nodes from master"
+        printf "[Verify no workers] Successfully deleted all worker nodes from master \n"
     fi
 fi
 
@@ -183,76 +193,10 @@ echo "$TOKEN"
 #Test the existence of the new token by confirming the existence of the kubeadm join command.
 if echo "$TOKEN" | grep -q -F 'kubeadm join'; 
 then
-    printf "[Token creation] Successfully created new token \n" 1>&2
+    set_activity_result 1 "[Token creation] Successfully created new token"
+    printf "[Token creation] Successfully created new token \n"
 else
+    set_activity_result 0 "[Token creation] Failed to create new token"
     printf "[Token creation] Failed to create new token \n" 1>&2
-    exit 5
-fi
-
-##################
-## Worker Reset ##
-##################
-
-#Verify that the k8s-worker1 has not already joined and then use remote ssh execution to reset the node and invoke the new token.
-if kubectl get nodes | grep -q 'k8s-worker1'; then
-	printf "Warning: k8s-worker1 already joined, cannot reset \n"
-else
-	printf "Connecting to k8s-worker1 \n"
-	sshpass -p "Passw0rd!" ssh -o "StrictHostKeyChecking no" root@192.168.1.31 "kubeadm reset --force --ignore-preflight-errors strings" 2>/dev/null
-	sshpass -p "Passw0rd!" ssh root@192.168.1.31 "$TOKEN" 2>/dev/null
-fi
-
-if kubectl get nodes | grep -q 'k8s-worker1'; 
-then
-    printf "[Rejoin workers] Successfully rejoined k8s-worker1 to k8s-master1 \n" 1>&2
-
-else
-    printf "[Rejoin workers] Failed to rejoin k8s-worker1 to k8s-master1 \n" 1>&2
-    exit 6
-fi
-
-#Verify that the k8s-worker2 has not already joined and then use remote ssh execution to reset the node and invoke the new token.
-if kubectl get nodes | grep -q 'k8s-worker2'; then
-	printf "Warning: k8s-worker2 already joined, cannot reset \n"
-else
-	printf "Connecting to k8s-worker2 \n"
-	sshpass -p "Passw0rd!" ssh -o "StrictHostKeyChecking no" root@192.168.1.32 "kubeadm reset --force --ignore-preflight-errors strings" 2>/dev/null
-	sshpass -p "Passw0rd!" ssh root@192.168.1.32 "$TOKEN" 2>/dev/null
-fi
-
-if kubectl get nodes | grep -q 'k8s-worker2'; 
-then
-    printf "[Rejoin workers] Successfully rejoined k8s-worker2 to k8s-master1 \n" 1>&2
-
-else
-    printf "[Rejoin workers] Failed to rejoin k8s-worker2 to k8s-master1 \n" 1>&2
-    exit 6
-fi
-
-wait
-
-
-##################
-## Node Testing ##
-##################
-# Wait until both nodes are reporting as ready
-
-i=0
-while [ "$i" -lt 30 ];
-do
-    if kubectl get nodes | grep -q 'NotReady'; 
-    then
-        sleep 1
-        ((i++))
-    else
-        printf "[Certificate renewal] Success: All nodes reporting as Ready\n" 1>&2
-        exit
-    fi
-done
-
-#After 30 seconds, if the Worker nodes are still NotReady, the script will report a failure.
-if kubectl get nodes | grep -q 'NotReady'; 
-then
-    printf "[Certificate renewal] Failure: Some nodes reporting as NotReady \n" 1>&2
-    exit 6
+    #exit 5
 fi
