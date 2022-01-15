@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# WORKERNODES should contain the names of all worker nodes that need to be removed from the master.
+####################################
+## WORKERNODES LIST, UPDATE ME!!! ##
+####################################
+# WORKERNODES should contain the names of all worker nodes when the lab is started.
+
 WORKERNODES=("k8s-worker1" "k8s-worker2")
 
 ########################
@@ -25,12 +29,12 @@ then
     sudo /bin/cp -p ~/.kube/config "$HOME"/k8s-old-certs/.kube/.
     #ls -l "$HOME"/k8s-old-certs/.kube/.
 
-    #Renew certificates and check expiration dates
+    # Renew certificates and check expiration dates
 
     sudo kubeadm alpha certs renew all
 
-    #Check that the certificates have been renewed by looking for the "residual time" value of invalid.
-    #This will be present if ANY certificate is invalid.
+    # Check that the certificates have been renewed by looking for the "residual time" value of invalid.
+    # This will be present if ANY certificate is invalid.
     if sudo kubeadm alpha certs check-expiration | grep -q 'invalid'; 
     then
         printf "[sudo kubeadm alpha certs renew all] Failed to update all certificates \n " 1>&2
@@ -60,18 +64,18 @@ then
 
     sudo cp /etc/kubernetes/admin.conf ~/.kube/config
 
-    #Verify update to file. You should see output. If no output, something is wrong. Check your steps.
+    # Verify update to file. You should see output. If no output, something is wrong. Check your steps.
 
     #sudo diff ~/.kube/config $HOME/k8s-old-certs/.kube/config
 
-    #Restart the kubelet service
+    # Restart the kubelet service
 
     sudo systemctl daemon-reload
     sudo systemctl restart kubelet
 
-    #Check that the certificates have been applied and the user can connect to kubectl
-    #Will return a connection error if this is not possible. 
-    #This test will make 30 attempts, and wait 1 second between each failed check.
+    # Check that the certificates have been applied and the user can connect to kubectl
+    # Will return a connection error if this is not possible. 
+    # This test will make 30 attempts, and wait 1 second between each failed check.
     i=0
     while [ "$i" -le 30 ];
     do
@@ -103,16 +107,16 @@ fi
 ## Node Deletion ##
 ###################
 # Delete the worker nodes to re-join with updated certificates
-#Each node will be attempted up-to 5 times, but are expected to succeed on the first.
-#A connection failure during validation will trigger an exit with error 3
+# Each node will be attempted up-to 5 times, but are expected to succeed on the first.
+# A connection failure during validation will trigger an exit with error 3
 
 
 
-#Interate over the array of worker node names, and delete each one from the cluster
+# Interate over the array of worker node names, and delete each one from the cluster
 for wnode in "${WORKERNODES[@]}"
 do
     i=0
-    while [ "$i" -le 3 ];
+    while [ "$i" -le 5 ];
     do
         if kubectl get nodes 2>&1 | grep -q 'refused'; 
         then
@@ -131,7 +135,7 @@ do
     done
 done
 
-#Confirm that all workers are deleted from master
+# Confirm that all workers are deleted from master
 if kubectl get nodes 2>&1 | grep -q 'refused'
 then
     printf "[Verify no workers] Failed to connect to kubectl \n" 1>&2
@@ -152,13 +156,13 @@ fi
 ## Create Token ##
 ##################
 
-#Generate an up-to-date boot-strap token to join new worker nodes to the VM
+# Generate an up-to-date boot-strap token to join new worker nodes to the VM
 TOKEN=$(kubeadm token create --print-join-command 2>/dev/null)
 #echo "$TOKEN"
 
 set_lab_variable "k8sToken" "$TOKEN"
 
-#Test the existence of the new token by confirming the existence of the kubeadm join command.
+# Test the existence of the new token by confirming the existence of the kubeadm join command.
 if echo "$TOKEN" | grep -q -F 'kubeadm join'; 
 then
     printf "[Token creation] Successfully created new token \n"
@@ -169,6 +173,6 @@ else
     #exit 5
 fi
 
-#sleep is called to allow the LODS platform the delay required to set_lab_variable "k8sToken" as "$TOKEN"
-#Otherwise, a race condition occurs that will can result in worker nodes not have access to the join token.
+# Sleep is called to allow the LODS platform the delay required to set_lab_variable "k8sToken" as "$TOKEN"
+# Otherwise, a race condition occurs that will can result in worker nodes not having access to the join token. (They will aquire the init value only)
 sleep 5
