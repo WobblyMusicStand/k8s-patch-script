@@ -173,7 +173,7 @@ fi
 
 #Generate an up-to-date boot-strap token to join new worker nodes to the VM
 TOKEN=$(kubeadm token create --print-join-command 2>/dev/null)
-echo "$TOKEN"
+#echo "$TOKEN"
 
 set_lab_variable "k8sToken" "$TOKEN"
 
@@ -187,3 +187,7 @@ else
     echo false
     #exit 5
 fi
+
+#sleep is called to allow the LODS platform the delay required to set_lab_variable "k8sToken" as "$TOKEN"
+#Otherwise, a race condition occurs that will can result in worker nodes not have access to the join token.
+sleep 1
