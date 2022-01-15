@@ -44,6 +44,6 @@ This LCAs should be configured as follows:
 
 ## Notification LCA
 Finally, an LCA should be added to alert the user that they may proceed with the lab.
-Blocking on only one worker will allow their resets to happen concurrently
+Blocking on only one worker will allow the worker re-joins to happen concurrently
 
 "All challenge resources have successfully deployed. You may now begin your challenge."
