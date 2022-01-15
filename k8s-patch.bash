@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#WORKERNODES is an array containing all the nodes which need to be removed from the master.
+# This array should be updated to match the VMs in use by the lab.
 WORKERNODES=("k8s-worker1" "k8s-worker2")
 
 ########################
