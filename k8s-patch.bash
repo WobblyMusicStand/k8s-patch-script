@@ -170,4 +170,4 @@ fi
 
 #sleep is called to allow the LODS platform the delay required to set_lab_variable "k8sToken" as "$TOKEN"
 #Otherwise, a race condition occurs that will can result in worker nodes not have access to the join token.
-sleep 1
+sleep 5
