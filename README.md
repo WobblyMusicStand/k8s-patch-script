@@ -6,7 +6,7 @@ For labs where there are no workers nodes, use k8s-certs-only.bash on the master
 
 ## Lab Variable
 First, an environment variable must be added to the lab instruction manual. 
-This is used to transfer the new join token from the master node to the worker nodes once the certs are updated.
+This is used to transfer the new join token from the master node to the worker nodes once the certificates are updated.
 
 | Name	| Value |	Token	|
 |---|---|---|
@@ -14,6 +14,7 @@ This is used to transfer the new join token from the master node to the worker n
 
 ## k8s-master.bash / k8s-certs-only.bash
 The k8s-master.bash script should be employed as an LCA targeting the k8s-master VM.
+k8s-certs-only.bash should be configured in the same manner.
 
 This LCA should be configured as follows:
 ||Value|
