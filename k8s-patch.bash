@@ -106,49 +106,29 @@ fi
 #A connection failure during validation will trigger an exit with error 3
 
 
-# Attempt deletion of Worker1
-i=0
-while [ "$i" -le 5 ];
+
+#Interate over the array of worker node names, and delete each one from the cluster
+for wnode in "${WORKERNODES[@]}"
 do
-    if kubectl get nodes 2>&1 | grep -q 'refused'; 
-    then
-        printf "[Delete Worker1] Warning: Failed to connect to kubectl on attempt: %s\n" "$i"
-    fi  
+    i=0
+    while [ "$i" -le 3 ];
+    do
+        if kubectl get nodes 2>&1 | grep -q 'refused'; 
+        then
+            printf "[Delete %s] Warning: Failed to connect to kubectl on attempt: %s\n" "$wnode" "$i" 
+        fi  
 
-    if kubectl get nodes | grep -q 'k8s-worker1'; 
-    then
-        printf "Attempting to deleting node Worker1"
-        kubectl delete node k8s-worker1
-    else
-        printf "[Delete Worker1] Successfully deleted Worker1 from master \n"
-        break
-    fi      
-    sleep 1
-    ((i++))
+        if kubectl get nodes | grep -q -F "$wnode"; 
+        then
+            printf "[Delete %s] Attempting to deleting node %s\n" "$wnode" "$wnode"
+            kubectl delete node "$wnode"
+        else
+            printf "[Delete %s] Successfully deleted node from master \n" "$wnode"
+            break
+        fi
+        ((i++))
+    done
 done
-
-# Attempt deletion of worker2
-i=0
-while [ "$i" -le 5 ];
-do
-    if kubectl get nodes 2>&1 | grep -q 'refused'; 
-    then
-        printf "[Delete Worker2] Warning: Failed to connect to kubectl on attempt: %s\n" "$i"
-    fi  
-
-    if kubectl get nodes | grep -q 'k8s-worker2'; 
-    then
-        printf "Attempting to deleting node Worker2"
-        kubectl delete node k8s-worker2
-    else
-        printf "[Delete Worker2] Successfully deleted Worker2 from master \n"
-        break
-    fi      
-    sleep 1
-    ((i++))
-done
-
-#wait
 
 #Confirm that all workers are deleted from master
 if kubectl get nodes 2>&1 | grep -q 'refused'
@@ -157,7 +137,7 @@ then
     echo false
     #exit 3
 else
-    if kubectl get nodes | grep -q 'k8s-worker1\|k8s-worker2'; 
+    if kubectl get nodes | grep -q 'worker'; 
     then
         printf "[Verify no workers] Failed to delete all worker nodes from master \n" 1>&2
         echo false
