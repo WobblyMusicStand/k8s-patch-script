@@ -29,11 +29,11 @@ This LCA should be configured as follows:
 | Timeout	| 5 Minutes |
 | Error Action |	End Lab |
 
-> ## WORKERNODES
-> k8s-master.bash also containes an array names WORKERNODES which must be updated to list all worker nodes added to the cluster at the time of lab build.
-> By default it lists:
-> 
-> WORKERNODES=("k8s-worker1" "k8s-worker2")
+ ## WORKERNODES
+ k8s-master.bash also containes an array names WORKERNODES which must be updated to list all worker nodes added to the cluster at the time of lab build.
+ By default it lists:
+ 
+ WORKERNODES=("k8s-worker1" "k8s-worker2")
 
 k8s-master.bash updates the certificates used by the cluster, removes all workers listed in WORKERNODES, and generates a new "join token" which is then saved into the k8sToken lab variable.
 
