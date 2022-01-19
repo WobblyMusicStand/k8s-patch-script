@@ -158,13 +158,11 @@ fi
 
 # Generate an up-to-date boot-strap token to join new worker nodes to the VM
 TOKEN=$(kubeadm token create --print-join-command 2>/dev/null)
-#echo "$TOKEN"
-
-set_lab_variable "k8sToken" "$TOKEN"
 
 # Test the existence of the new token by confirming the existence of the kubeadm join command.
 if echo "$TOKEN" | grep -q -F 'kubeadm join'; 
 then
+    set_lab_variable "k8sToken" "$TOKEN"
     printf "[Token creation] Successfully created new token \n"
     echo true
 else
