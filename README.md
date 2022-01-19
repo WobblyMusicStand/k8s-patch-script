@@ -10,7 +10,7 @@ This is used to transfer the new join token from the master node to the worker n
 
 | Name	| Value |	Token	|
 |---|---|---|
-| k8sToken | init | @lab.Variable(k8sToken)	|
+| k8sToken | No Token | @lab.Variable(k8sToken)	|
 
 ## k8s-master.bash / k8s-certs-only.bash
 The k8s-master.bash script should be employed as an LCA targeting the k8s-master VM.
