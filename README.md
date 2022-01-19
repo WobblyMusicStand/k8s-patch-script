@@ -55,10 +55,24 @@ This LCAs should be configured as follows:
 | Timeout	| 1 Minutes |
 | Error Action |	End Lab |
 
-## Notification LCA
-Finally, an LCA should be added to alert the user that they may proceed with the lab.
+## Notification LCAs
+Finally, an LCAs should be added to alert the user that they need to wait, and when they may proceed with the lab.
 Blocking on only one worker will allow the worker re-joins to happen concurrently
 
-"All challenge resources are now provisioned. You may now begin your challenge."
+||Value|
+|---|---|
+| Name	| Lab Launching |
+| Action	| Send Notification to User |
+| Event | Post-Build |
+| Delay | 0 Seconds |
+| Error Action |	Log |
+| Contents | Your challenge resources are loading, which may take a few minutes. You will receive notification when this action is complete. |
 
-Your challenge resources are loading, which may take a few minutes. You will receive notification when this action is complete.
+||Value|
+|---|---|
+| Name	| Build complete |
+| Action	| Send Notification to User |
+| Event | First Displayable |
+| Delay | 0 Seconds |
+| Error Action |	Log |
+| Contents | All challenge resources are now provisioned. You may now begin your challenge. |
