@@ -50,7 +50,7 @@ then
 
     # If no output, file was not updated. Update kubelet.conf.
 
-    cd /etc/kubernetes || exit
+    cd /etc/kubernetes
 
     sudo chmod 666 kubelet.conf
 
