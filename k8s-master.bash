@@ -31,15 +31,14 @@ then
 
     # Renew certificates and check expiration dates
 
-    sudo kubeadm alpha certs renew all
+    sudo kubeadm alpha certs renew all 2>/dev/null
 
     # Check that the certificates have been renewed by looking for the "residual time" value of invalid.
     # This will be present if ANY certificate is invalid.
-    if sudo kubeadm alpha certs check-expiration | grep -q 'invalid'; 
+    if sudo kubeadm alpha certs check-expiration 2>/dev/null | grep -q 'invalid'; 
     then
         printf "[sudo kubeadm alpha certs renew all] Failed to update all certificates \n " 1>&2
         echo false
-        #exit 2
     else
         printf "[sudo kubeadm alpha certs renew all] Successfully updated certificates \n"
     fi
@@ -76,30 +75,31 @@ then
     # Check that the certificates have been applied and the user can connect to kubectl
     # Will return a connection error if this is not possible. 
     # This test will make 30 attempts, and wait 1 second between each failed check.
-    i=0
+    i=1
     while [ "$i" -le 30 ];
     do
+        printf "kubectl connection try: %s\n" "$i"
         if kubectl get nodes 2>&1 | grep -q 'refused'; 
         then
-            printf "kubectl connection try: %s\n" "$i"
+            sleep 1
+            ((i++))
         else
             break
         fi        
-        sleep 1
-        ((i++))
     done
 
     if kubectl get nodes 2>&1 | grep -q 'k8s-master1'; 
     then
         printf "[Certificate renewal] Successfully updated certificates \n"
+        echo true
     else
         printf "[Certificate renewal] Failed to place updated certificates in all locations \n" 1>&2
         echo false
-        #exit 3
     fi   
 
 else    
     printf "[Certificate Renewal] Warning: No invalid certificates, attempting to update Nodes \n "
+    echo false
 fi
 
 
@@ -108,7 +108,7 @@ fi
 ###################
 # Delete the worker nodes to re-join with updated certificates
 # Each node will be attempted up-to 5 times, but are expected to succeed on the first.
-# A connection failure during validation will trigger an exit with error 3
+# A connection failure during validation will trigger an error
 
 
 
@@ -140,13 +140,11 @@ if kubectl get nodes 2>&1 | grep -q 'refused'
 then
     printf "[Verify no workers] Failed to connect to kubectl \n" 1>&2
     echo false
-    #exit 3
 else
     if kubectl get nodes | grep -q 'worker'; 
     then
         printf "[Verify no workers] Failed to delete all worker nodes from master \n" 1>&2
         echo false
-        #exit 4
     else
         printf "[Verify no workers] Successfully deleted all worker nodes from master \n"
     fi
@@ -168,9 +166,8 @@ then
 else
     printf "[Token creation] Failed to create new token \n" 1>&2
     echo false
-    #exit 5
 fi
 
 # Sleep is called to allow the LODS platform the delay required to set_lab_variable "k8sToken" as "$TOKEN"
 # Otherwise, a race condition occurs that will can result in worker nodes not having access to the join token. (They will aquire the init value only)
-sleep 10
+sleep 5
