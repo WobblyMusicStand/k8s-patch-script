@@ -19,6 +19,7 @@ k8s-certs-only.bash should be configured in the same manner.
 This LCA should be configured as follows:
 ||Value|
 |---|---|
+| Name	| Master-Update Certs |
 | Action	| Execute Script in Virtual Machine |
 | Event | First Displayable |
 | Blocking |Yes|
@@ -44,6 +45,7 @@ The k8s-worker.bash script should be employed as an LCA targeting each k8s-worke
 This LCAs should be configured as follows:
 ||Value|
 |---|---|
+| Name	| Worker-**Number**-Rejoin Cluster |
 | Action	| Execute Script in Virtual Machine |
 | Event | First Displayable |
 | Blocking | **No for all but the last VM, which should be Yes.** |
