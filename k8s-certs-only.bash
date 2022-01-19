@@ -22,17 +22,16 @@ then
     sudo /bin/cp -p ~/.kube/config "$HOME"/k8s-old-certs/.kube/.
     #ls -l "$HOME"/k8s-old-certs/.kube/.
 
-    #Renew certificates and check expiration dates
+    # Renew certificates and check expiration dates
 
-    sudo kubeadm alpha certs renew all
+    sudo kubeadm alpha certs renew all 2>/dev/null
 
-    #Check that the certificates have been renewed by looking for the "residual time" value of invalid.
-    #This will be present if ANY certificate is invalid.
-    if sudo kubeadm alpha certs check-expiration | grep -q 'invalid'; 
+    # Check that the certificates have been renewed by looking for the "residual time" value of invalid.
+    # This will be present if ANY certificate is invalid.
+    if sudo kubeadm alpha certs check-expiration 2>/dev/null | grep -q 'invalid'; 
     then
         printf "[sudo kubeadm alpha certs renew all] Failed to update all certificates \n " 1>&2
         echo false
-        #exit 2
     else
         printf "[sudo kubeadm alpha certs renew all] Successfully updated certificates \n"
     fi
@@ -43,7 +42,7 @@ then
 
     # If no output, file was not updated. Update kubelet.conf.
 
-    cd /etc/kubernetes || exit
+    cd /etc/kubernetes
 
     sudo chmod 666 kubelet.conf
 
@@ -57,40 +56,41 @@ then
 
     sudo cp /etc/kubernetes/admin.conf ~/.kube/config
 
-    #Verify update to file. You should see output. If no output, something is wrong. Check your steps.
+    # Verify update to file. You should see output. If no output, something is wrong. Check your steps.
 
     #sudo diff ~/.kube/config $HOME/k8s-old-certs/.kube/config
 
-    #Restart the kubelet service
+    # Restart the kubelet service
 
     sudo systemctl daemon-reload
     sudo systemctl restart kubelet
 
-    #Check that the certificates have been applied and the user can connect to kubectl
-    #Will return a connection error if this is not possible. 
-    #This test will make 30 attempts, and wait 1 second between each failed check.
-    i=0
+    # Check that the certificates have been applied and the user can connect to kubectl
+    # Will return a connection error if this is not possible. 
+    # This test will make 30 attempts, and wait 1 second between each failed check.
+    i=1
     while [ "$i" -le 30 ];
     do
+        printf "kubectl connection try: %s\n" "$i"
         if kubectl get nodes 2>&1 | grep -q 'refused'; 
         then
-            printf "kubectl connection try: %s\n" "$i"
+            sleep 1
+            ((i++))
         else
             break
         fi        
-        sleep 1
-        ((i++))
     done
 
     if kubectl get nodes 2>&1 | grep -q 'k8s-master1'; 
     then
         printf "[Certificate renewal] Successfully updated certificates \n"
+        echo true
     else
         printf "[Certificate renewal] Failed to place updated certificates in all locations \n" 1>&2
         echo false
-        #exit 3
     fi   
 
 else    
-    printf "[Certificate Renewal] Warning: No invalid certificates, aborting \n "
+    printf "[Certificate Renewal] Abort: No invalid certificates \n "
+    echo false
 fi
