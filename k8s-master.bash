@@ -161,7 +161,7 @@ TOKEN=$(kubeadm token create --print-join-command 2>/dev/null)
 if echo "$TOKEN" | grep -q -F 'kubeadm join'; 
 then
     set_lab_variable "k8sToken" "$TOKEN"
-    printf "[Token creation] Successfully created new token \n"
+    printf "[Token creation] Successfully created: %s \n" "$TOKEN"
     echo true
 else
     printf "[Token creation] Failed to create new token \n" 1>&2
