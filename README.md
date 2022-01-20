@@ -51,10 +51,17 @@ This reduces the launch failure rate.
 | Event | First Displayable |
 | Blocking |Yes|
 | Language |	*PowerShell* |
-| Delay | 5 Seconds |
+| Delay | 10 Seconds |
 | Timeout	| 20 Seconds |
 | Error Action |	Log |
-| Script | return $true |
+
+Script:
+```
+# This delay is added to allow the LODS platform time to set the k8sToken variable.
+# Otherwise, a race condition occurs that will can result in worker nodes not having access to the join token. (They will aquire the init value only)
+
+return $true
+```
 
 ## k8s-worker.bash
 The k8s-worker.bash script should be employed as an LCA targeting each k8s-worker VM.
