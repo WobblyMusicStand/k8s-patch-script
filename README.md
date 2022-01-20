@@ -58,7 +58,7 @@ This reduces the launch failure rate.
 Script:
 ```
 # This delay is added to allow the LODS platform time to set the k8sToken variable.
-# Otherwise, a race condition occurs that will can result in worker nodes not having access to the join token. (They will aquire the init value only)
+# Otherwise, a race condition occurs that can result in worker nodes not having access to the join token. (They will aquire the init value only)
 
 return $true
 ```
@@ -80,7 +80,7 @@ This LCAs should be configured as follows:
 | Error Action |	End Lab |
 
 ## Notification LCAs
-Finally, a LCAs should be added to alert the user that they need to wait, and when they may proceed with the lab.
+Finally, a LCA should be added to alert the user that they need to wait, and when they may proceed with the lab.
 Blocking on only one worker will allow the worker re-joins to happen concurrently
 
 ||Value|
@@ -94,7 +94,7 @@ Blocking on only one worker will allow the worker re-joins to happen concurrentl
 
 ||Value|
 |---|---|
-| Name	| Build complete |
+| Name	| Build Complete |
 | Action	| Send Notification to User |
 | Event | First Displayable |
 | Delay | 0 Seconds |
