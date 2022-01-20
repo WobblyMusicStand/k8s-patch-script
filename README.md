@@ -25,7 +25,7 @@ This LCA should be configured as follows:
 | Blocking |Yes|
 | Machine |	*Master VM* |
 | Language |	Bash |
-| Delay | 10 Seconds |
+| Delay | 20 Seconds |
 | Timeout	| 5 Minutes |
 | Error Action |	End Lab |
 
