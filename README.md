@@ -73,7 +73,7 @@ This LCAs should be configured as follows:
 | Error Action |	End Lab |
 
 ## Notification LCAs
-Finally, an LCAs should be added to alert the user that they need to wait, and when they may proceed with the lab.
+Finally, a LCAs should be added to alert the user that they need to wait, and when they may proceed with the lab.
 Blocking on only one worker will allow the worker re-joins to happen concurrently
 
 ||Value|
