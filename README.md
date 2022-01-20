@@ -25,7 +25,7 @@ This LCA should be configured as follows:
 | Blocking |Yes|
 | Machine |	*Master VM* |
 | Language |	Bash |
-| Delay | 20 Seconds |
+| Delay | 30 Seconds **Does not guarantee 100% launch rate, but will allow the VM time to boot in *most* cases** |
 | Timeout	| 5 Minutes |
 | Error Action |	End Lab |
 
@@ -38,6 +38,23 @@ This LCA should be configured as follows:
 k8s-master.bash updates the certificates used by the cluster, removes all workers listed in WORKERNODES, and generates a new "join token" which is then saved into the k8sToken lab variable.
 
 k8s-certs-only.bash updates the certificates used by the cluster.
+
+## DELAY LCA
+And blocking LCA should be added immediately after the k8s-master LCA, this will contain only a 5 second delay.
+The purpose of this LCA is to build in buffer time for the Lab Variable to be set before the worker node LCAs are evaluated.
+This reduces the launch failure rate.
+
+||Value|
+|---|---|
+| Name	| k8sToken Delay |
+| Action	| Execute Custom Script |
+| Event | First Displayable |
+| Blocking |Yes|
+| Language |	*PowerShell* |
+| Delay | 5 Seconds |
+| Timeout	| 20 Seconds |
+| Error Action |	Log |
+| Script | return $true |
 
 ## k8s-worker.bash
 The k8s-worker.bash script should be employed as an LCA targeting each k8s-worker VM.
