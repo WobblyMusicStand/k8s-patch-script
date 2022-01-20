@@ -40,7 +40,7 @@ k8s-master.bash updates the certificates used by the cluster, removes all worker
 k8s-certs-only.bash updates the certificates used by the cluster.
 
 ## DELAY LCA
-And blocking LCA should be added immediately after the k8s-master LCA, this will contain only a 5 second delay.
+A blocking LCA should be added immediately after the k8s-master LCA, this will contain only a 5 second delay.
 The purpose of this LCA is to build in buffer time for the Lab Variable to be set before the worker node LCAs are evaluated.
 This reduces the launch failure rate.
 
